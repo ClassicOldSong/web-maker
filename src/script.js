@@ -282,7 +282,7 @@ globalConsoleContainerEl
 		const d = deferred();
 		var obj = {};
 		obj[setting] = value;
-		chrome.storage.local.set(obj, d.resolve);
+		db.local.set(obj, d.resolve);
 		return d.promise;
 	}
 
@@ -302,13 +302,13 @@ globalConsoleContainerEl
 		});
 		// Push into the items hash if its a new item being saved
 		if (isNewItem) {
-			chrome.storage.local.get(
+			db.local.get(
 				{
 					items: {}
 				},
 				function(result) {
 					result.items[currentItem.id] = true;
-					chrome.storage.local.set({
+					db.local.set({
 						items: result.items
 					});
 				}
@@ -971,7 +971,7 @@ globalConsoleContainerEl
 
 		contents +=
 			'<script src="' +
-			chrome.extension.getURL('lib/screenlog.js') +
+			// chrome.extension.getURL('lib/screenlog.js') +
 			'"></script>';
 
 		if (jsMode === JsModes.ES6) {
@@ -984,13 +984,11 @@ globalConsoleContainerEl
 		if (js) {
 			contents += '<script>\n' + js + '\n//# sourceURL=userscript.js';
 		} else {
+			var origin = chrome.i18n.getMessage()
+				? `chrome-extension://${chrome.i18n.getMessage('@@extension_id')}`
+				: `${location.origin}`;
 			contents +=
-				'<script src="' +
-				'filesystem:chrome-extension://' +
-				chrome.i18n.getMessage('@@extension_id') +
-				'/temporary/' +
-				'script.js' +
-				'">';
+				'<script src="' + `filesystem:${origin}/temporary/script.js` + '">';
 		}
 		contents += '\n</script>\n</body>\n</html>';
 
@@ -1065,15 +1063,14 @@ globalConsoleContainerEl
 		// CSP from affecting it.
 		writeFile('script.js', blobjs, function() {
 			writeFile('preview.html', blob, function() {
-				const frameSrc =
-					'filesystem:chrome-extension://' +
-					chrome.i18n.getMessage('@@extension_id') +
-					'/temporary/' +
-					'preview.html';
+				var origin = chrome.i18n.getMessage()
+					? `chrome-extension://${chrome.i18n.getMessage('@@extension_id')}`
+					: `${location.origin}`;
+				var src = `filesystem:${origin}/temporary/preview.html`;
 				if (scope.detachedWindow) {
-					scope.detachedWindow.postMessage(frame.src, '*');
+					scope.detachedWindow.postMessage(src, '*');
 				} else {
-					frame.src = frameSrc;
+					frame.src = src;
 				}
 			});
 		});
@@ -1976,7 +1973,7 @@ globalConsoleContainerEl
 			) {
 				hasSeenNotifications = true;
 				notificationsBtn.classList.remove('has-new');
-				chrome.storage.sync.set(
+				db.sync.set(
 					{
 						lastSeenVersion: version
 					},
@@ -2251,7 +2248,7 @@ globalConsoleContainerEl
 			$('#demo-frame').classList.remove('pointer-none');
 		});
 
-		chrome.storage.local.get(
+		db.local.get(
 			{
 				layoutMode: 1,
 				code: ''
@@ -2266,7 +2263,7 @@ globalConsoleContainerEl
 		);
 
 		// Get synced `preserveLastCode` setting to get back last code (or not).
-		chrome.storage.sync.get(
+		db.sync.get(
 			{
 				preserveLastCode: true,
 				replaceNewTab: false,
@@ -2293,7 +2290,7 @@ globalConsoleContainerEl
 				if (result.preserveLastCode && lastCode) {
 					unsavedEditCount = 0;
 					if (lastCode.id) {
-						chrome.storage.local.get(lastCode.id, function(itemResult) {
+						db.local.get(lastCode.id, function(itemResult) {
 							utils.log('Load item ', lastCode.id);
 							currentItem = itemResult[lastCode.id];
 							refreshEditor();
@@ -2333,7 +2330,7 @@ globalConsoleContainerEl
 		);
 
 		// Check for new version notifications
-		chrome.storage.sync.get(
+		db.sync.get(
 			{
 				lastSeenVersion: ''
 			},
@@ -2345,7 +2342,7 @@ globalConsoleContainerEl
 						trackEvent('ui', 'onboardModalSeen', version);
 						document.cookie = 'onboarded=1';
 					}
-					chrome.storage.sync.set(
+					db.sync.set(
 						{
 							lastSeenVersion: version
 						},
@@ -2353,7 +2350,7 @@ globalConsoleContainerEl
 					);
 					// set some initial preferences on closing the onboard modal
 					utils.once(document, 'overlaysClosed', function() {
-						chrome.storage.sync.set(
+						db.sync.set(
 							{
 								replaceNewTab: onboardShowInTabOptionBtn.classList.contains(
 									'selected'
