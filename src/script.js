@@ -983,7 +983,7 @@ globalConsoleContainerEl
 				'"></script>';
 		}
 
-		if (js) {
+		if (js !== undefined) {
 			contents += '<script>\n' + js + '\n//# sourceURL=userscript.js';
 		} else {
 			var origin = chrome.i18n.getMessage()
