@@ -101,6 +101,7 @@ globalConsoleContainerEl
 	};
 
 	const AUTO_SAVE_INTERVAL = 15000; // 15 seconds
+	const BASE_PATH = chrome.extension ? '/' : '/dist/';
 
 	var updateTimer,
 		updateDelay = 500,
@@ -973,7 +974,7 @@ globalConsoleContainerEl
 			'<script src="' +
 			(chrome.extension
 				? chrome.extension.getURL('lib/screenlog.js')
-				: `${location.origin}/lib/screenlog.js`) +
+				: `${location.origin}/${BASE_PATH}/lib/screenlog.js`) +
 			'"></script>';
 
 		if (jsMode === JsModes.ES6) {
@@ -983,7 +984,7 @@ globalConsoleContainerEl
 				'"></script>';
 		}
 
-		if (js !== undefined) {
+		if (typeof js === 'string') {
 			contents += '<script>\n' + js + '\n//# sourceURL=userscript.js';
 		} else {
 			var origin = chrome.i18n.getMessage()
@@ -1052,7 +1053,7 @@ globalConsoleContainerEl
 
 	function createPreviewFile(html, css, js) {
 		const shouldInlineJs = !window.webkitRequestFileSystem;
-		var contents = getCompleteHtml(html, css, shouldInlineJs ? js : '');
+		var contents = getCompleteHtml(html, css, shouldInlineJs ? js : null);
 		var blob = new Blob([contents], { type: 'text/plain;charset=UTF-8' });
 		var blobjs = new Blob([js], { type: 'text/plain;charset=UTF-8' });
 
@@ -1697,8 +1698,7 @@ globalConsoleContainerEl
 		indentationSizeValueEl.textContent = $('[data-setting=indentSize]').value;
 
 		// Replace correct css file in LINK tags's href
-		editorThemeLinkTag.href =
-			'/lib/codemirror/theme/' + prefs.editorTheme + '.css';
+		editorThemeLinkTag.href = `lib/codemirror/theme/${prefs.editorTheme}.css`;
 		fontStyleTag.textContent = fontStyleTemplate.textContent.replace(
 			/fontname/g,
 			(prefs.editorFont === 'other'
@@ -1961,7 +1961,7 @@ globalConsoleContainerEl
 	function init() {
 		var lastCode;
 
-		CodeMirror.modeURL = 'lib/codemirror/mode/%N/%N.js';
+		CodeMirror.modeURL = `${BASE_PATH}/lib/codemirror/mode/%N/%N.js`;
 
 		function getToggleLayoutButtonListener(mode) {
 			return function() {
